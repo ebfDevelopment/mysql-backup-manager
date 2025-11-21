@@ -15,6 +15,9 @@
         "ext-pdo": "*",
         "ext-zip": "*"
     },
+    "suggest": {
+        "google/apiclient": "^2.15 - Para integração com Google Drive"
+    },
     "autoload": {
         "psr-4": {
             "MysqlBackup\\": "src/"

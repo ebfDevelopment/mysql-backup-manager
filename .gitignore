@@ -1,1 +1,36 @@
+# Composer
 /vendor/
+composer.phar
+
+# PHPUnit
+/phpunit.xml
+/.phpunit.result.cache
+
+# Credentials (não commitar na lib)
+credentials.json
+token.json
+
+# Backups de teste
+/backups/
+*.sql
+*.zip
+
+# IDEs
+/.idea/
+/.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Temporary files
+*.tmp
+*.temp
+*.cache
