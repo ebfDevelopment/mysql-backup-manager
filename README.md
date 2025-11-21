@@ -12,7 +12,7 @@ Biblioteca PHP 7.4+ para realizar backups de banco de dados MySQL com suporte a 
 ## 🚀 Instalação
 
 ```bash
-composer require seu-usuario/mysql-backup
+composer require edifonttes/mysql-backup-manager
 ```
 
 Ou adicione manualmente ao seu `composer.json`:
