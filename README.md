@@ -20,7 +20,7 @@ Ou adicione manualmente ao seu `composer.json`:
 ```json
 {
     "require": {
-        "seu-usuario/mysql-backup": "^1.0"
+        "edifonttes/mysql-backup-manager": "^1.0"
     }
 }
 ```
