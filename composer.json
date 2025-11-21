@@ -1,0 +1,31 @@
+{
+    "name": "edifonttes/mysql-backup-manager",
+    "description": "Biblioteca PHP para backup de banco de dados MySQL com suporte a SQL e ZIP",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Edivan B. Fontes",
+            "email": "ebezerradevelopment@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=7.4",
+        "ext-pdo": "*",
+        "ext-zip": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "MysqlBackup\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "MysqlBackup\\Tests\\": "tests/"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5"
+    }
+}
