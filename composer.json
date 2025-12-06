@@ -3,6 +3,7 @@
     "description": "Biblioteca PHP para backup de banco de dados MySQL com suporte a SQL e ZIP",
     "type": "library",
     "license": "MIT",
+    "keywords": ["mysql", "backup", "database", "google-drive"],
     "authors": [
         {
             "name": "Edivan B. Fontes",

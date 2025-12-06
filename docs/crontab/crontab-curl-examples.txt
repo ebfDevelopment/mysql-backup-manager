@@ -1,0 +1,105 @@
+# ========================================
+# Exemplos de Crontab via CURL
+# ========================================
+
+# IMPORTANTE: Substitua:
+# - https://seusite.com pelo seu domínio
+# - SEU_TOKEN_SEGURO pelo token do .env
+
+# ========================================
+# 1. BACKUP DIÁRIO via CURL
+# Todo dia às 2h da manhã
+# ========================================
+0 2 * * * curl -s "https://seusite.com/cron/daily-backup.php?token=SEU_TOKEN_SEGURO" >> /var/log/backup-curl.log 2>&1
+
+# ========================================
+# 2. BACKUP SEMANAL via CURL
+# Todo domingo às 3h
+# ========================================
+0 3 * * 0 curl -s "https://seusite.com/cron/weekly-backup.php?token=SEU_TOKEN_SEGURO" >> /var/log/backup-weekly-curl.log 2>&1
+
+# ========================================
+# 3. BACKUP MÚLTIPLOS BANCOS via CURL
+# Todo dia à 1h
+# ========================================
+0 1 * * * curl -s "https://seusite.com/cron/multiple-databases-backup.php?token=SEU_TOKEN_SEGURO" >> /var/log/backup-multiple-curl.log 2>&1
+
+# ========================================
+# 4. LIMPEZA via CURL
+# Todo dia às 4h
+# ========================================
+0 4 * * * curl -s "https://seusite.com/cron/cleanup-old-backups.php?token=SEU_TOKEN_SEGURO" >> /var/log/backup-cleanup-curl.log 2>&1
+
+# ========================================
+# OPÇÕES CURL
+# ========================================
+
+# Com timeout (30 segundos)
+0 2 * * * curl -s --max-time 30 "https://seusite.com/cron/daily-backup.php?token=SEU_TOKEN" >> /var/log/backup.log 2>&1
+
+# Com retry (3 tentativas)
+0 2 * * * curl -s --retry 3 "https://seusite.com/cron/daily-backup.php?token=SEU_TOKEN" >> /var/log/backup.log 2>&1
+
+# Salvando resposta JSON
+0 2 * * * curl -s "https://seusite.com/cron/daily-backup.php?token=SEU_TOKEN" -o /var/log/backup-response.json
+
+# Com verificação de SSL
+0 2 * * * curl -s --cacert /etc/ssl/certs/ca-certificates.crt "https://seusite.com/cron/daily-backup.php?token=SEU_TOKEN"
+
+# Ignorando SSL (NÃO RECOMENDADO em produção)
+0 2 * * * curl -s -k "https://seusite.com/cron/daily-backup.php?token=SEU_TOKEN"
+
+# ========================================
+# COMPARAÇÃO CLI vs CURL
+# ========================================
+
+# CLI (executa diretamente no servidor)
+0 2 * * * /usr/bin/php /var/www/html/cron/daily-backup.php
+
+# CURL (executa via HTTP - útil para servidores compartilhados)
+0 2 * * * curl -s "https://seusite.com/cron/daily-backup.php?token=TOKEN"
+
+# ========================================
+# VANTAGENS DE CADA MÉTODO
+# ========================================
+
+# CLI:
+# ✓ Mais rápido
+# ✓ Menos overhead
+# ✓ Mais seguro (não passa pela web)
+# ✓ Não depende do servidor web
+# ✗ Requer acesso SSH/shell
+
+# CURL:
+# ✓ Funciona em hospedagens compartilhadas
+# ✓ Funciona com CPanel/Plesk
+# ✓ Não precisa acesso SSH
+# ✓ Pode ser monitorado via HTTP
+# ✗ Depende do servidor web rodando
+# ✗ Precisa configurar token de segurança
+
+# ========================================
+# TESTE ANTES DE AGENDAR
+# ========================================
+
+# Teste CLI:
+php /caminho/para/daily-backup.php
+
+# Teste CURL:
+curl "https://seusite.com/cron/daily-backup.php?token=SEU_TOKEN"
+
+# Teste com saída formatada:
+curl "https://seusite.com/cron/daily-backup.php?token=SEU_TOKEN" | jq
+
+# ========================================
+# MONITORAMENTO
+# ========================================
+
+# Ver últimas execuções:
+tail -f /var/log/backup-curl.log
+
+# Verificar se teve sucesso (procura por "success":true):
+grep -i "success" /var/log/backup-curl.log
+
+# Ver erros:
+grep -i "error" /var/log/backup-curl.log

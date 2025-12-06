@@ -1,6 +1,16 @@
-# MySQL Backup Library
+# MySQL Backup Manager
+Biblioteca PHP moderna para backup de bancos de dados MySQL com suporte a múltiplos formatos e integração com Google Drive.
 
-Biblioteca PHP 7.4+ para realizar backups de banco de dados MySQL com suporte a exportação em SQL e ZIP, além de integração com Google Drive.
+## ✨ Características
+
+- 🗄️ **Backup completo** (estrutura + dados)
+- 📦 **Múltiplos formatos** (SQL, ZIP)
+- ☁️ **Google Drive** integrado (opcional)
+- 📤 **HTTP POST** para envio remoto
+- 🔔 **Webhooks** para notificações em tempo real
+- 🔧 **Modular e extensível**
+- ⚡ **Fácil de usar**
+- 🧪 **Testado** e documentado
 
 ## 📋 Requisitos
 
@@ -24,12 +34,19 @@ Ou adicione manualmente ao seu `composer.json`:
     }
 }
 ```
+### Com Google Drive (opcional):
+```bash
+composer require google/apiclient:^2.15
+```
 
-## 📖 Uso Básico
+## 💡 Uso Básico
 
-### Backup em SQL
+### Backup SQL:
 
 ```php
+<?php
+require 'vendor/autoload.php';
+
 use MysqlBackup\BackupManager;
 use MysqlBackup\Config\BackupConfig;
 
@@ -42,172 +59,239 @@ $config = new BackupConfig([
 ]);
 
 $manager = new BackupManager($config);
-$arquivo = $manager->backupToSql();
 
+// Backup em SQL
+$arquivo = $manager->backupToSql();
 echo "Backup criado: {$arquivo}";
 ```
 
-### Backup em ZIP
+### Backup ZIP:
 
 ```php
+// Backup compactado
 $arquivo = $manager->backupToZip();
-echo "Backup ZIP criado: {$arquivo}";
 ```
 
-### Backup com nome personalizado
-
-```php
-$arquivo = $manager->backupToZip('meu_backup_2025.zip');
-```
-
-## ☁️ Integração com Google Drive
-
-### Preparação
-
-1. Crie um projeto no [Google Cloud Console](https://console.cloud.google.com/)
-2. Ative a API do Google Drive
-3. Crie credenciais OAuth 2.0 ou Service Account
-4. Baixe o arquivo JSON de credenciais
-
-### Uso
+### Com Google Drive:
 
 ```php
 use MysqlBackup\Storage\GoogleDriveStorage;
 
 $storage = new GoogleDriveStorage(
-    '/caminho/para/credentials.json',
-    'ID_DA_PASTA_NO_DRIVE' // opcional
+    __DIR__ . '/credentials.json',
+    'ID_DA_PASTA' // opcional
 );
 
-// Integre com sua biblioteca do Google Drive
-// $storage->setDriveService($seuServicoDrive);
+$manager->setStorage($storage);
+$arquivo = $manager->backupToZip(); // Local + Google Drive
+```
+
+### Com HTTP POST (envio remoto):
+
+```php
+use MysqlBackup\Storage\HttpPostStorage;
+
+$storage = new HttpPostStorage(
+    'https://seu-servidor.com/backup/receive-backup.php',
+    [],
+    ['token' => 'seu_token_seguro']
+);
 
 $manager->setStorage($storage);
-$arquivo = $manager->backupToZip(); // Salva localmente E no Drive
+$arquivo = $manager->backupToZip(); // Local + envio remoto
 ```
 
-## ⚙️ Configurações
-
-### Opções da BackupConfig
-
-| Opção | Tipo | Padrão | Descrição |
-|-------|------|--------|-----------|
-| `host` | string | `localhost` | Host do banco de dados |
-| `database` | string | `''` | Nome do banco de dados |
-| `username` | string | `root` | Usuário do banco |
-| `password` | string | `''` | Senha do banco |
-| `port` | int | `3306` | Porta de conexão |
-| `charset` | string | `utf8mb4` | Charset da conexão |
-| `backup_path` | string | `sys_get_temp_dir()` | Caminho para salvar backups |
-
-## 🏗️ Estrutura do Projeto
-
-```
-src/
-├── BackupManager.php          # Gerenciador principal
-├── Config/
-│   └── BackupConfig.php       # Configurações
-├── Interfaces/
-│   ├── ExporterInterface.php  # Interface para exportadores
-│   └── StorageInterface.php   # Interface para storage
-├── Exporters/
-│   ├── SqlExporter.php        # Exportador SQL
-│   └── ZipExporter.php        # Exportador ZIP
-└── Storage/
-    └── GoogleDriveStorage.php # Storage Google Drive
-```
-
-## 🔧 Desenvolvimento
-
-### Instalação para desenvolvimento
-
-```bash
-git clone https://github.com/seu-usuario/mysql-backup.git
-cd mysql-backup
-composer install
-```
-
-### Criando um novo Storage
-
-Implemente a interface `StorageInterface`:
+### Com Webhooks (notificações):
 
 ```php
-namespace MysqlBackup\Interfaces;
+use MysqlBackup\Notifications\WebhookNotifier;
 
-interface StorageInterface
-{
-    public function upload(string $filePath, string $filename): bool;
-}
-```
-
-### Criando um novo Exporter
-
-Implemente a interface `ExporterInterface`:
-
-```php
-namespace MysqlBackup\Interfaces;
-
-interface ExporterInterface
-{
-    public function export(string $filename): string;
-}
-```
-
-## 📝 Exemplos Avançados
-
-### Backup automático com Cron
-
-```php
-// backup-cron.php
-require 'vendor/autoload.php';
-
-$config = new MysqlBackup\Config\BackupConfig([
-    'host' => getenv('DB_HOST'),
-    'database' => getenv('DB_NAME'),
-    'username' => getenv('DB_USER'),
-    'password' => getenv('DB_PASS'),
-    'backup_path' => '/var/backups/mysql'
+$webhook = new WebhookNotifier([
+    'https://seu-servidor.com/webhook'
 ]);
-
-$manager = new MysqlBackup\BackupManager($config);
 
 try {
     $arquivo = $manager->backupToZip();
-    echo date('Y-m-d H:i:s') . " - Backup realizado: {$arquivo}\n";
+    
+    // Notifica sucesso
+    $webhook->notifySuccess([
+        'file' => basename($arquivo),
+        'size_mb' => 12.5
+    ]);
 } catch (Exception $e) {
-    echo date('Y-m-d H:i:s') . " - Erro: {$e->getMessage()}\n";
-    exit(1);
+    // Notifica falha
+    $webhook->notifyFailure($e->getMessage());
 }
 ```
 
-Adicione ao crontab:
+## 📚 Exemplos Avançados
+
+Esta biblioteca inclui exemplos prontos para produção em `docs/examples/`:
+
+### 📂 Copie para sua aplicação:
+
 ```bash
-0 2 * * * /usr/bin/php /caminho/para/backup-cron.php >> /var/log/backup.log 2>&1
+# Scripts de Cron (CLI e CURL)
+cp -r vendor/seu-usuario/mysql-backup/docs/examples/cron ./
+
+# Sistema de Webhooks
+cp -r vendor/seu-usuario/mysql-backup/docs/examples/webhooks ./
+
+# Configuração
+cp vendor/seu-usuario/mysql-backup/docs/examples/config/.env.example ./.env
+
+# Scripts utilitários
+cp vendor/seu-usuario/mysql-backup/docs/examples/scripts/* ./
 ```
 
-## 🐛 Tratamento de Erros
+### 🎯 O que está incluído:
 
-A biblioteca lança exceções `RuntimeException` em caso de erro:
+#### **Cron Jobs:**
+- ✅ Backup diário automático
+- ✅ Backup semanal com rotação
+- ✅ Múltiplos bancos de dados
+- ✅ Limpeza de backups antigos
+- ✅ Suporte CLI e CURL
+
+#### **Webhooks Internos:**
+- ✅ Registro automático de eventos
+- ✅ Formatos: JSON, CSV, TXT
+- ✅ Visualizador web
+- ✅ API para integração
+
+#### **Scripts Úteis:**
+- ✅ Instalador de cron jobs
+- ✅ Testes automatizados
+- ✅ Configuração facilitada
+
+## 📖 Documentação Completa
+
+Guias detalhados disponíveis em `docs/guides/`:
+
+- 📘 [Instalação](docs/guides/INSTALLATION.md)
+- 📗 [Uso Básico](docs/guides/BASIC_USAGE.md)
+- 📙 [Configuração de Cron](docs/guides/CRON_SETUP.md)
+- 📕 [Cron via CURL](docs/guides/CURL_SETUP.md)
+- 📤 [Envio via HTTP POST](docs/guides/HTTP_POST_SETUP.md)
+- 🔔 [Webhooks (Notificações)](docs/guides/WEBHOOK_NOTIFICATIONS.md)
+- 📔 [Webhooks Internos (Logs)](docs/guides/WEBHOOK_SETUP.md)
+- 📓 [Testes](docs/guides/TESTING.md)
+- 📒 [Troubleshooting](docs/guides/TROUBLESHOOTING.md)
+
+## ⚙️ Configuração
+
+### BackupConfig:
 
 ```php
-try {
-    $arquivo = $manager->backupToSql();
-} catch (\RuntimeException $e) {
-    error_log("Erro no backup: " . $e->getMessage());
-    // Implementar notificação, retry, etc.
+$config = new BackupConfig([
+    'host' => 'localhost',      // Host do banco
+    'database' => 'database',   // Nome do banco
+    'username' => 'root',       // Usuário
+    'password' => 'senha',      // Senha
+    'port' => 3306,            // Porta (padrão: 3306)
+    'charset' => 'utf8mb4',    // Charset (padrão: utf8mb4)
+    'backup_path' => '/path'   // Onde salvar
+]);
+```
+
+## 🔧 Opções Avançadas
+
+### Backup com nome personalizado:
+
+```php
+$manager->backupToSql('meu_backup_custom.sql');
+$manager->backupToZip('meu_backup_custom.zip');
+```
+
+### Listar arquivos no Google Drive:
+
+```php
+$files = $storage->listFiles(10);
+foreach ($files as $file) {
+    echo $file->getName() . "\n";
 }
 ```
 
-## 📄 Licença
+### Deletar arquivo do Drive:
 
-MIT License - veja o arquivo LICENSE para detalhes.
+```php
+$storage->deleteFile('ID_DO_ARQUIVO');
+```
+
+## 🎯 Casos de Uso
+
+### Backup Agendado (Cron):
+
+```bash
+# Todo dia às 2h
+0 2 * * * /usr/bin/php /caminho/cron/daily-backup.php
+```
+
+### Backup via CURL (Hospedagem compartilhada):
+
+```bash
+# CPanel, Plesk, etc
+0 2 * * * curl -s "https://seu-site.com/cron/daily-backup.php?token=TOKEN"
+```
+
+### Múltiplos Bancos:
+
+```php
+$databases = ['db1', 'db2', 'db3'];
+
+foreach ($databases as $db) {
+    $config->setDatabase($db);
+    $manager = new BackupManager($config);
+    $manager->backupToZip();
+}
+```
+
+## 🧪 Testes
+
+```bash
+# Instale dependências de dev
+composer install --dev
+
+# Execute testes
+vendor/bin/phpunit
+
+# Com coverage
+vendor/bin/phpunit --coverage-html coverage
+```
 
 ## 🤝 Contribuindo
 
-Contribuições são bem-vindas! Por favor, abra uma issue ou pull request.
+Contribuições são bem-vindas! Por favor:
 
-## 🔗 Links Úteis
+1. Fork o projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/nova-feature`)
+3. Commit suas mudanças (`git commit -am 'Add nova feature'`)
+4. Push para a branch (`git push origin feature/nova-feature`)
+5. Abra um Pull Request
 
-- [Documentação PHP PDO](https://www.php.net/manual/en/book.pdo.php)
-- [Google Drive API PHP](https://developers.google.com/drive/api/v3/quickstart/php)
-- [Composer](https://getcomposer.org/)
+## 📝 Changelog
+
+Veja [CHANGELOG.md](CHANGELOG.md) para histórico de versões.
+
+### Últimas versões:
+
+- **1.2.0** - Integração para envio remoto (HTTP POST), Webhooks para notificações em tempo real
+- **1.1.0** - Integração Google Drive, exemplos de cron
+- **1.0.0** - Release inicial com backup SQL e ZIP
+
+## 📄 Licença
+
+Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
+
+## 🙏 Agradecimentos
+
+- [Google API PHP Client](https://github.com/googleapis/google-api-php-client)
+- Comunidade PHP
+
+## 🌟 Star History
+
+Se esta biblioteca foi útil, considere dar uma ⭐ no GitHub!
+
+---
+
+**Desenvolvido com ❤️ para a comunidade PHP**

@@ -1,0 +1,22 @@
+# Proteção da pasta cron
+# Permite acesso apenas aos arquivos PHP via token
+
+# Nega acesso direto a arquivos
+<FilesMatch "\.(txt|log|json|env)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Permite PHP
+<FilesMatch "\.php$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>
+
+# Opcional: Restringe por IP (descomente e ajuste)
+# <Files "*.php">
+#     Order deny,allow
+#     Deny from all
+#     Allow from 127.0.0.1
+#     Allow from SEU.IP.AQUI
+# </Files>
